@@ -46,7 +46,10 @@ final class PlayBackPresenter {
  
     private var trackBySong : Song?
     private var tracksBySong = [Song]()
-
+    
+    private var currentItemIndexClosedRange : ClosedRange<Int> = 0...1
+    private var currentItemIndexArray : [Int] = [0,1]
+    
     private var currentItemIndex : Int?
     private var songs : [Song]?
     private var tracks : [Track]?
@@ -56,19 +59,25 @@ final class PlayBackPresenter {
     
 
     
-    
-    func playSongBySong(
-        
+    func playShuffleBySong (
         from viewController: UIViewController,
-        songs : [Song],
-        currentItemIndex : Int) {
+        songs : [Song]) {
         
         player?.pause()
         
-        self.currentItemIndex = currentItemIndex
         self.songs = songs
-        self.currentItemSong = songs[currentItemIndex]
         
+        self.currentItemIndexArray.removeAll()
+        self.currentItemIndex = 0
+        
+        for n in 0...(songs.count - 1) {
+            self.currentItemIndexArray.append(n)
+        }
+        
+        currentItemIndexArray.shuffle()
+        
+        currentItemSong = songs[currentItemIndexArray[0]]
+       
         self.imageUrl = currentItemSong?.album_poster ?? ""
         self.title = currentItemSong?.title ?? ""
         self.artist = currentItemSong?.artist ?? ""
@@ -100,7 +109,7 @@ final class PlayBackPresenter {
             { [self] (time) in
                 
                 if time.seconds > Double(self?.currentItemSong?.duration ?? 0) {
-                    print("End")
+                    
                //     self?.player?.pause()
                     
                     self?.didTapForward()
@@ -111,6 +120,150 @@ final class PlayBackPresenter {
                 self?.playerVC?.refreshUI()
 
 
+            }
+        }
+        NotificationCenter.default.post(name: NSNotification.Name("playerOn") , object: nil)
+        
+        // Сохранение контроллера в память
+        PlayerContext.context = vc
+    
+    
+        
+    }
+    
+    func playShuffleByTrack (
+        from viewController: UIViewController,
+        tracks : [Track]) {
+        
+        player?.pause()
+        
+        self.tracks = tracks
+        
+        self.currentItemIndexArray.removeAll()
+        self.currentItemIndex = 0
+        
+        for n in 0...(tracks.count - 1) {
+            self.currentItemIndexArray.append(n)
+        }
+        
+        currentItemIndexArray.shuffle()
+        
+        currentItemTrack = tracks[currentItemIndexArray[0]]
+       
+        self.imageUrl = currentItemTrack?.album_poster ?? ""
+        self.title = currentItemTrack?.title ?? ""
+        self.artist = currentItemTrack?.artist ?? ""
+        
+        self.currentItemSong = nil
+        self.songs = []
+
+        self.currentTrackCurrentTime = "0:00"
+        self.currentTrackDuration = convertSecondsToTime(time: currentItemTrack?.duration ?? 0)
+        self.slidersValueMax = Float(currentItemTrack?.duration ?? 0)
+        
+        guard let currentURL = URL(string: "https://musicexpress.sarafa2n.ru" + (currentItemTrack?.audio ?? "")) else { return }
+        player = AVPlayer(url: currentURL)
+        player?.volume = 0.5
+        
+        let vc = PlayerViewController()
+        self.playerVC = vc
+
+        vc.title = currentItemTrack?.title ?? ""
+        vc.dataSource = self
+        vc.delegate = self
+        vc.modalTransitionStyle = .flipHorizontal
+        viewController.present(vc, animated: true) { [weak self] in
+            self?.player?.play()
+            
+            
+            self?.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000),
+                                                  queue: DispatchQueue.main)
+            { [self] (time) in
+                
+                if time.seconds > Double(self?.currentItemTrack?.duration ?? 0) {
+                    
+               //     self?.player?.pause()
+                    
+                    self?.didTapForward()
+                    sleep(2)
+                }
+                self?.currentSlidersValue = Float(round(time.seconds))
+                self?.currentTrackCurrentTime = self?.convertSecondsToTime(time: Int(self?.currentSlidersValue ?? 0)) ?? ""
+                self?.playerVC?.refreshUI()
+
+
+            }
+        }
+        NotificationCenter.default.post(name: NSNotification.Name("playerOn") , object: nil)
+        
+        // Сохранение контроллера в память
+        PlayerContext.context = vc
+    
+    
+        
+    }
+    
+    
+    func playSongBySong(
+        
+        from viewController: UIViewController,
+        songs : [Song],
+        currentItemIndex : Int) {
+        
+        player?.pause()
+        
+        self.currentItemIndex = currentItemIndex
+        self.songs = songs
+        self.currentItemSong = songs[currentItemIndex]
+        
+        self.currentItemIndexArray.removeAll()
+        
+        for n in 0...(songs.count - 1) {
+            self.currentItemIndexArray.append(n)
+        }
+        
+     
+        
+        self.imageUrl = currentItemSong?.album_poster ?? ""
+        self.title = currentItemSong?.title ?? ""
+        self.artist = currentItemSong?.artist ?? ""
+        
+        self.currentItemTrack = nil
+        self.tracks = []
+
+        self.currentTrackCurrentTime = "0:00"
+        self.currentTrackDuration = convertSecondsToTime(time: currentItemSong?.duration ?? 0)
+        self.slidersValueMax = Float(currentItemSong?.duration ?? 0)
+        
+        guard let currentURL = URL(string: "https://musicexpress.sarafa2n.ru" + (currentItemSong?.audio ?? "")) else { return }
+        player = AVPlayer(url: currentURL)
+        player?.volume = 0.5
+        
+        let vc = PlayerViewController()
+        self.playerVC = vc
+
+        vc.title = currentItemSong?.name ?? currentItemSong?.title ?? ""
+        vc.dataSource = self
+        vc.delegate = self
+        vc.modalTransitionStyle = .flipHorizontal
+        viewController.present(vc, animated: true) { [weak self] in
+            self?.player?.play()
+            
+            
+            self?.player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000),
+                                                  queue: DispatchQueue.main)
+            { [self] (time) in
+                
+                
+                if round(time.seconds) == Double(self?.currentItemSong?.duration ?? 0) {
+                    
+                    self?.player?.pause()
+                    self?.didTapForward()
+                    
+                }
+                self?.currentSlidersValue = Float(round(time.seconds))
+                self?.currentTrackCurrentTime = self?.convertSecondsToTime(time: Int(self?.currentSlidersValue ?? 0)) ?? ""
+                self?.playerVC?.refreshUI()
             }
         }
         NotificationCenter.default.post(name: NSNotification.Name("playerOn") , object: nil)
@@ -130,6 +283,14 @@ final class PlayBackPresenter {
         self.currentItemIndex = currentItemIndex
         self.tracks = tracks
         self.currentItemTrack = tracks[currentItemIndex]
+        
+        self.currentItemIndexArray.removeAll()
+        
+        for n in 0...(tracks.count - 1) {
+            self.currentItemIndexArray.append(n)
+        }
+
+      
         
         self.currentTrackCurrentTime = "0:00"
         self.currentTrackDuration = convertSecondsToTime(time: currentItemTrack?.duration ?? 0)
@@ -162,12 +323,12 @@ final class PlayBackPresenter {
                                                   queue: DispatchQueue.main)
             { [self] (time) in
                 
-                self?.player?.actionAtItemEnd = .pause
-                if time.seconds > Double(self?.currentItemTrack?.duration ?? 0) {
-                    print("End")
+                
+                
+                if round(time.seconds) == Double(self?.currentItemTrack?.duration ?? 0) {
                     
+                    self?.player?.pause()
                     self?.didTapForward()
-                    
                 }
                 
                 self?.currentSlidersValue = Float(round(time.seconds))
@@ -200,6 +361,7 @@ final class PlayBackPresenter {
 
 
 extension PlayBackPresenter: PlayerViewControllerDelegate {
+    
     func didSlideSliderVolume(value: Float) {
         player?.volume = value
     }
@@ -207,12 +369,8 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
     func didSlideSliderSong(value: Float) {
         
         player?.seek(to: CMTime(seconds: Double(value), preferredTimescale: 5000))
-        
-        
     }
     
-    
-   
     
     func didTapPlayPause() {
         if let player = player {
@@ -237,16 +395,20 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
         currentSlidersValue = 0
         playerVC?.refreshUI()
         
+        
 
         if currentItemTrack == nil && tracks?.isEmpty == true {
             
             if ((currentItemIndex ?? 0)) == ((songs?.count ?? 0) - 1) {
+                
                 currentItemIndex = 0
+                
             } else {
-            currentItemIndex = (currentItemIndex ?? 0) + 1
+                
+                currentItemIndex = (currentItemIndex ?? 0) + 1
             }
-            
-            currentItemSong = songs?[currentItemIndex ?? 0]
+
+            currentItemSong = songs?[currentItemIndexArray[currentItemIndex ?? 0]]
             self.currentTrackDuration = convertSecondsToTime(time: currentItemSong?.duration ?? 0)
             self.slidersValueMax = Float(currentItemSong?.duration ?? 0)
 
@@ -261,11 +423,9 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
             NotificationCenter.default.post(name: NSNotification.Name("Play"), object: nil)
             player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000), queue: DispatchQueue.main) { [self] (time) in
                 
-                if time.seconds > Double(self.currentItemSong?.duration ?? 0) {
-                    sleep(2)
-                    print("End")
-                    //self.player?.pause()
-
+                if round(time.seconds) == Double(self.currentItemSong?.duration ?? 0) {
+                    
+                    self.player?.pause()
                     self.didTapForward()
                 }
                 
@@ -277,12 +437,15 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
         } else if currentItemSong == nil && songs?.isEmpty == true {
             
             if ((currentItemIndex ?? 0)) == ((tracks?.count ?? 0) - 1) {
+                
                 currentItemIndex = 0
+                
             } else {
-            currentItemIndex = (currentItemIndex ?? 0) + 1
+                
+                currentItemIndex = (currentItemIndex ?? 0) + 1
             }
-            
-            currentItemTrack = tracks?[currentItemIndex ?? 0]
+
+            currentItemTrack = tracks?[currentItemIndexArray[currentItemIndex ?? 0]]
             self.currentTrackDuration = convertSecondsToTime(time: currentItemTrack?.duration ?? 0)
             self.slidersValueMax = Float(currentItemTrack?.duration ?? 0)
 
@@ -297,8 +460,8 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
             NotificationCenter.default.post(name: NSNotification.Name("Play"), object: nil)
             player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000), queue: DispatchQueue.main) { [self] (time) in
                 
-                if time.seconds > Double(self.currentItemTrack?.duration ?? 0) {
-                    print("End")
+                if round(time.seconds) == Double(self.currentItemTrack?.duration ?? 0) {
+                    
                     self.player?.pause()
                     self.didTapForward()
                 }
@@ -325,12 +488,17 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
         if currentItemTrack == nil && tracks?.isEmpty == true {
             
             if ((currentItemIndex ?? 0) == 0) {
-                currentItemIndex = (songs?.count ?? 0) - 1
+                
+                currentItemIndex = currentItemIndexArray.count - 1
+                
             } else {
-            currentItemIndex = (currentItemIndex ?? 0) - 1
+                
+                currentItemIndex = (currentItemIndex ?? 0) - 1
             }
             
-            currentItemSong = songs?[currentItemIndex ?? 0]
+            
+            currentItemSong = songs?[currentItemIndexArray[currentItemIndex ?? 0]]
+            
             self.currentTrackDuration = convertSecondsToTime(time: currentItemSong?.duration ?? 0)
             self.slidersValueMax = Float(currentItemSong?.duration ?? 0)
 
@@ -346,8 +514,8 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
             NotificationCenter.default.post(name: NSNotification.Name("Play"), object: nil)
             player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000), queue: DispatchQueue.main) { [self] (time) in
                 
-                if time.seconds > Double(self.currentItemSong?.duration ?? 0) {
-                    print("End")
+                if round(time.seconds) == Double(self.currentItemSong?.duration ?? 0) {
+                    
                     self.player?.pause()
                     self.didTapForward()
                 }
@@ -361,12 +529,15 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
         else if currentItemSong == nil && songs?.isEmpty == true {
             
             if ((currentItemIndex ?? 0) == 0) {
-                currentItemIndex = (tracks?.count ?? 0) - 1
+                
+                currentItemIndex = currentItemIndexArray.count - 1
+                
             } else {
-            currentItemIndex = (currentItemIndex ?? 0) - 1
+                
+                currentItemIndex = (currentItemIndex ?? 0) - 1
             }
 
-            currentItemTrack = tracks?[currentItemIndex ?? 0]
+            currentItemTrack = tracks?[currentItemIndexArray[currentItemIndex ?? 0]]
             self.slidersValueMax = Float(currentItemTrack?.duration ?? 0)
             self.currentTrackDuration = convertSecondsToTime(time: currentItemTrack?.duration ?? 0)
 
@@ -382,8 +553,8 @@ extension PlayBackPresenter: PlayerViewControllerDelegate {
             NotificationCenter.default.post(name: NSNotification.Name("Play"), object: nil)
             player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1000), queue: DispatchQueue.main) { [self] (time) in
                 
-                if time.seconds > Double(self.currentItemTrack?.duration ?? 0) {
-                    print("End")
+                if round(time.seconds) == Double(self.currentItemTrack?.duration ?? 0) {
+                    
                     self.player?.pause()
                     self.didTapForward()
                 }

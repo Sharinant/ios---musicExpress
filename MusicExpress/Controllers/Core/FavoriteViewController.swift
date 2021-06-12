@@ -10,7 +10,7 @@ import UIKit
 class FavoriteViewController: UIViewController {
     
     @objc func didTapPlayer() {
-        print("hi")
+       
  
         guard let vc = PlayerContext.context else {
             return
@@ -20,10 +20,12 @@ class FavoriteViewController: UIViewController {
     
     @objc func playerButtonEnable()  {
         playerButton.isEnabled = true
-        print("enabled")
+       
     }
     
     private var favoriteSongs : [Song] = []
+    
+    
     
     private let collectionViewSongs = UICollectionView(
         frame: .zero,
@@ -49,12 +51,30 @@ class FavoriteViewController: UIViewController {
                 )
                                                     
                 let section = NSCollectionLayoutSection(group: firstGroup)
-                // свойство для горизонтальных групп
-        
+                let supplementaryViews = [NSCollectionLayoutBoundarySupplementaryItem(
+                                            layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1),
+                                                                               heightDimension: .fractionalWidth(0.3)),
+                                            elementKind: UICollectionView.elementKindSectionHeader,
+                                            alignment: .top)]
+                
+                section.boundarySupplementaryItems = supplementaryViews
+
                 return section
             }
         )
     )
+    
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        
+        guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: FavoriteHeaderCollectionReusableView.identifier, for: indexPath) as? FavoriteHeaderCollectionReusableView,kind == UICollectionView.elementKindSectionHeader else {
+            return UICollectionReusableView()
+        }
+            
+        
+        header.configure(with: "123")
+        header.delegate = self
+        return header
+    }
 
     private let noFavoriteImage : UIImageView = {
         let imageView = UIImageView()
@@ -134,6 +154,10 @@ class FavoriteViewController: UIViewController {
             TopTracksCollectionViewCell.self,
             forCellWithReuseIdentifier: TopTracksCollectionViewCell.identifier
         )
+        
+        collectionViewSongs.register(FavoriteHeaderCollectionReusableView.self,
+                                     forSupplementaryViewOfKind:  UICollectionView.elementKindSectionHeader,
+                                     withReuseIdentifier: FavoriteHeaderCollectionReusableView.identifier)
 
         collectionViewSongs.backgroundColor = .systemBackground
         collectionViewSongs.delegate = self
@@ -318,4 +342,16 @@ extension FavoriteViewController: UICollectionViewDelegate, UICollectionViewData
         PlayBackPresenter.shared.playSongBySong(from: self, songs: favoriteSongs, currentItemIndex: indexPath.row)
 
     }
+}
+
+extension FavoriteViewController : FavoriteHeaderCollectionReusableViewDelegate {
+    func didTapPlayAll(_ header: FavoriteHeaderCollectionReusableView) {
+        PlayBackPresenter.shared.playSongBySong(from: self, songs: favoriteSongs, currentItemIndex: 0)
+    }
+    
+    func didTapShuffleAll() {
+        PlayBackPresenter.shared.playShuffleBySong(from: self, songs: favoriteSongs)
+    }
+    
+    
 }

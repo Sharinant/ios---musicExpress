@@ -230,8 +230,12 @@ extension AlbumViewController: UICollectionViewDelegate, UICollectionViewDataSou
 }
 
 extension AlbumViewController: AlbumHeaderCollectionReusableViewDelegate {
+    func albumDidTapShuffleAll() {
+        PlayBackPresenter.shared.playShuffleByTrack(from: self, tracks: tracks)
+    }
+    
     func albumHeaderCollectionReusableViewDidTapPlayAll(_ header: AlbumHeaderCollectionReusableView) {
-        print("Playing all")
+    //    print("Playing all")
         PlayBackPresenter.shared.playSongByTrack(from: self, tracks: tracks, currentItemIndex: 0)
     }
 }

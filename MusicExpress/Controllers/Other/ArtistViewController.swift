@@ -168,9 +168,13 @@ extension ArtistViewController: UICollectionViewDelegate, UICollectionViewDataSo
     }
 }
 extension ArtistViewController: ArtistHeaderCollectionReusableViewDelegate {
+    func didTapShuffleArtist() {
+        PlayBackPresenter.shared.playShuffleBySong(from: self, songs: tracks)
+    }
+    
     func didTapPlayAllArtist(_ header:
                                 ArtistHeaderCollectionReusableView) {
-        print("Play all - artist")
+      //  print("Play all - artist")
         PlayBackPresenter.shared.playSongBySong(from: self, songs: tracks, currentItemIndex: 0)
     }
     

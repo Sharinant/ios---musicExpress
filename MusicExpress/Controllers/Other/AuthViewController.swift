@@ -11,6 +11,16 @@ import SDWebImage
 
 class AuthViewController: UIViewController, WKNavigationDelegate {
     
+    
+    private let welcomeImage : UIImageView = {
+        let imageView = UIImageView()
+        let image = UIImage(named: "welcomeImage.jpg")
+        imageView.image = image
+        imageView.contentMode = .scaleAspectFill
+        
+        return imageView
+    }()
+    
     private let login: UITextField = {
         let tf = UITextField()
         tf.borderStyle = .none
@@ -135,10 +145,13 @@ class AuthViewController: UIViewController, WKNavigationDelegate {
         view.backgroundColor = .systemBackground
         
         let stackView = mainStackView()
+        
+        welcomeImage.frame = view.bounds
+        view.addSubview(welcomeImage)
         view.addSubview(stackView)
         stackView.frame = CGRect(
             x: 20,
-            y: view.height / 2,
+            y: view.height / 2.5,
             width: view.width - 40,
             height: 150
         )
@@ -155,8 +168,6 @@ class AuthViewController: UIViewController, WKNavigationDelegate {
         stackView.axis = .vertical
         stackView.distribution = .fillProportionally
         stackView.spacing = 10
-        
-        
         return stackView
     }
     

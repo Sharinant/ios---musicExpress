@@ -7,7 +7,7 @@
 
 import UIKit
 
-
+var groupOfDayString = ""
 
 enum BrowseSectionType {
     case groupOfTheDay(viewModels : [groupOfDayCellViewModel]) //0
@@ -18,7 +18,7 @@ enum BrowseSectionType {
     case topTracks(viewModels: [TopSongsCellViewModel]) //3
     case topAlbums(viewModels: [RecomendedAlbumCellViewModel]) //4
     
-    case teamNameLabel //5
+    
     
     
     var title: String {
@@ -35,12 +35,9 @@ enum BrowseSectionType {
             return "Популярные альбомы"
             
         case .groupOfTheDay:
-            return "Группа дня " 
+            return "Группа дня - " + groupOfDayString
         case .newSongs:
             return "Новые релизы"
-            
-        case .teamNameLabel:
-        return ""
         
         }
     }
@@ -127,7 +124,7 @@ class HomeViewController: UIViewController {
     
     @objc func playerButtonEnable()  {
         playerButton.isEnabled = true
-        print("enabled")
+     //   print("enabled")
     }
     
     @objc func reloadTracksStates () {
@@ -249,7 +246,7 @@ class HomeViewController: UIViewController {
     }
     
     @objc func didTapPlayer() {
-        print("hi")
+      //  print("hi")
  
         guard let vc = PlayerContext.context else {
             return
@@ -433,8 +430,8 @@ class HomeViewController: UIViewController {
             
             let secondGroup = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(0.8),
-                    heightDimension: .fractionalWidth(1.05)
+                    widthDimension: .fractionalWidth(0.85),
+                    heightDimension: .fractionalWidth(1.1)
                 ),
                 subitem: firstGroup,
                 count: 2
@@ -595,23 +592,102 @@ class HomeViewController: UIViewController {
         }
     }
     
+   
+        
+     private func showAlert() {
+            let alert = UIAlertController(title: "Alert", message: "Wait Please!", preferredStyle: .alert)
+            self.present(alert, animated: true, completion: nil)
+            Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false, block: { _ in alert.dismiss(animated: true, completion: nil)} )
+        }
+        
+       
+        
+    
+    
     private func addLongTapGesture() {
             let gesture = UILongPressGestureRecognizer(target: self, action: #selector(didLongPress(_ :)))
             collectionView.addGestureRecognizer(gesture)
         }
 
         @objc func didLongPress(_ gesture: UILongPressGestureRecognizer) {
+            
+             
+            
             guard gesture.state == .began else {
                 return
             }
 
             let touchPoint = gesture.location(in: collectionView)
-
+            
+            
             guard let indexPath = collectionView.indexPathForItem(at: touchPoint) else {
                 return
             }
+            let type = sections[indexPath.section]
+            
+            switch type {
+            
+            case .newSongs:
+                let model = tracks[indexPath.row]
+                let actionSheet = UIAlertController(
+                    title: model.name,
+                    message: "Хотите добавить в плейлист?",
+                    preferredStyle: .actionSheet
+                )
+                
+                
 
-            if (indexPath.section == 3) {
+                actionSheet.addAction(
+                    UIAlertAction(
+                        title: "Отмена",
+                        style: .cancel,
+                        handler: nil
+                    )
+                )
+
+                actionSheet.addAction(
+                    UIAlertAction(
+                        title: "Добавить",
+                        style: .default,
+                        handler: { [weak self] _ in
+                            DispatchQueue.main.async {
+                                let vc = PlaylistsViewController()
+                                vc.selectionHandler = { playlist in
+                                    APICaller.shared.postSongToPlaylist(
+                                        trackNumber: model.id ?? 0,
+                                        playlistNumber: playlist.id ?? 0
+                                    ) { result in
+                                        switch result{
+                                        case .success(_):
+                                            
+                                            break
+                                        case .failure(let error):
+                                            print(error)
+                                            break
+                                        }
+                                    }
+                                }
+                                vc.title = "Выберите плейлист"
+                                self?.present(
+                                    UINavigationController(rootViewController: vc),
+                                    animated: true,
+                                    completion: {
+                
+                                    })
+                                
+                            }
+                            
+                            
+                        }
+                        
+                    )
+                )
+               
+                present(actionSheet, animated: true,completion: nil)
+                NotificationCenter.default.post(name: NSNotification.Name("playlist reload") , object: nil)
+                break
+            case .topTracks:
+                
                 let model = tracks[indexPath.row]
                 let actionSheet = UIAlertController(
                     title: model.name,
@@ -652,63 +728,16 @@ class HomeViewController: UIViewController {
                                 self?.present(
                                     UINavigationController(rootViewController: vc),
                                     animated: true,
-                                    completion: nil
-                                )
+                                    completion: nil)
                             }
                         }
                     )
                 )
 
                 present(actionSheet, animated: true)
-            } else if (indexPath.section == 2) {
-                let model = newSongs[indexPath.row]
-                let actionSheet = UIAlertController(
-                    title: model.name,
-                    message: "Хотите добавить в плейлист?",
-                    preferredStyle: .actionSheet
-                )
-
-                actionSheet.addAction(
-                    UIAlertAction(
-                        title: "Отмена",
-                        style: .cancel,
-                        handler: nil
-                    )
-                )
-
-                actionSheet.addAction(
-                    UIAlertAction(
-                        title: "Добавить",
-                        style: .default,
-                        handler: { [weak self] _ in
-                            DispatchQueue.main.async {
-                                let vc = PlaylistsViewController()
-                                vc.selectionHandler = { playlist in
-                                    APICaller.shared.postSongToPlaylist(
-                                        trackNumber: model.id ?? 0,
-                                        playlistNumber: playlist.id ?? 0
-                                    ) { result in
-                                        switch result{
-                                        case .success(_):
-                                            break
-                                        case .failure(let error):
-                                            print(error)
-                                            break
-                                        }
-                                    }
-                                }
-                                vc.title = "Выберите плейлист"
-                                self?.present(
-                                    UINavigationController(rootViewController: vc),
-                                    animated: true,
-                                    completion: nil
-                                )
-                            }
-                        }
-                    )
-                )
-
-                present(actionSheet, animated: true)
+                break
+            default:
+                break
             }
         }
 }
@@ -723,6 +752,8 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
         
 
         let section = indexPath.section
+        
+        groupOfDayString = groupOfDay[0].name ?? "nil"
         let title = sections[section].title
         
         header.configure(with: title)
@@ -744,8 +775,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             return 1
         case .newSongs(let model):
             return model.count
-        case .teamNameLabel:
-            return 1
+        
         }
         
     }
@@ -827,15 +857,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             
             return cell
             
-        case .teamNameLabel:
-            
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TeamNameCollectionViewCell.identifier, for: indexPath) as! TeamNameCollectionViewCell
-            cell.teamNameLabel.text = "Project MusicExpress by @CodeExpress for Technopark Mail.ru"
-            cell.teamNameLabel.font = .systemFont(ofSize: 13, weight: .light)
-            cell.teamNameLabel.numberOfLines = 0
-            cell.teamNameLabel.frame = CGRect(x: 2, y: 0, width: 300, height: 100)
-            
-            return cell
+        
         }
     }
     
@@ -888,8 +910,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             vc.navigationItem.largeTitleDisplayMode = .never
             navigationController?.pushViewController(vc, animated: true)
             break
-        case .teamNameLabel:
-            break
+        
             
     }
     

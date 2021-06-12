@@ -51,7 +51,7 @@ final class AuthManager {
         formatter.dateFormat = dateFormat
         UserDefaults.standard.setValue(formatter.string(from: credentials.expired), forKey: "expire")
         
-        print(credentials.expired, credentials.cookie, credentials.csrf)
+     //   print(credentials.expired, credentials.cookie, credentials.csrf)
     }
     
     private let dateFormat = "yyyy-MM-dd HH:mm:ss Z"

@@ -9,12 +9,23 @@ import UIKit
 
 class WelcomeViewController: UIViewController {
     
+    
+    private let welcomeImage : UIImageView = {
+        let imageView = UIImageView()
+        let image = UIImage(named: "welcomeImage.jpg")
+        imageView.image = image
+        imageView.contentMode = .scaleAspectFill
+        
+        return imageView
+    }()
+    
     private let signInButton: UIButton = {
         let button = UIButton()
 
-        button.backgroundColor = .white
+        button.backgroundColor = .blue
         button.setTitle("Sign In", for: .normal)
-        button.setTitleColor(.blue, for: .normal)
+        
+        button.setTitleColor(.white, for: .normal)
 
         return button
     }()
@@ -23,7 +34,10 @@ class WelcomeViewController: UIViewController {
         super.viewDidLoad()
 
         title = "MusicExpress"
-        view.backgroundColor = .systemGreen
+        
+       // view.backgroundColor = .systemGreen
+        welcomeImage.frame = view.bounds
+        view.addSubview(welcomeImage)
         view.addSubview(signInButton)
         signInButton.addTarget(self, action: #selector(didTapSignIn), for: .touchUpInside)
     }
@@ -32,7 +46,7 @@ class WelcomeViewController: UIViewController {
         super.viewDidLayoutSubviews()
         signInButton.frame = CGRect(
             x: 20,
-            y: view.height - 50 - view.safeAreaInsets.bottom,
+            y: view.bottom - 100 ,
             width: view.width - 40,
             height: 50
         )
@@ -47,13 +61,14 @@ class WelcomeViewController: UIViewController {
         }
         vc.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
+      
     }
     
     private func handleSignIn(success: Bool) {
-        if !success {
+       if !success {
             let alert = UIAlertController(
                 title: "Alert",
-                message: "Something went wrong",
+                message: "Wrong login or password",
                 preferredStyle: .alert
             )
             alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: nil))

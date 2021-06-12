@@ -197,7 +197,7 @@ final class APICaller {
                     completion(.failure(APIError.faileedToGetData))
                     return
                 }
-                print(httpResponse.statusCode)
+            //    print(httpResponse.statusCode)
                 
                 if httpResponse.statusCode != 200 {
                     completion(.failure(APIError.somethingGoWrong))
@@ -231,7 +231,7 @@ final class APICaller {
                     completion(.failure(APIError.faileedToGetData))
                     return
                 }
-                print(httpResponse.statusCode)
+            //    print(httpResponse.statusCode)
                 
                 if httpResponse.statusCode != 200 {
                     completion(.failure(APIError.somethingGoWrong))
@@ -272,6 +272,39 @@ final class APICaller {
             task.resume()
         }
     }
+    
+    public func getNameGroupOfDay(completion: @escaping (Result<Song, Error>) -> Void) {
+        createRequest(
+            with: URL(string: Constans.domen + Constans.api + "artist/day")!,
+            method: .Get
+        ) { request in
+            let task = URLSession.shared.dataTask(with: request) { (data, _, error) in
+                if error != nil {
+                    completion(.failure(APIError.faileedToGetData))
+                    return
+                }
+               
+                guard let data = data else {
+                    completion(.failure(APIError.faileedToGetData))
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    do {
+                        let decoded = try JSONDecoder().decode(Song.self, from: data)
+                        completion(.success(decoded))
+                    } catch {
+                        completion(.failure(error))
+                    }
+                }
+            }
+            task.resume()
+        }
+    }
+    
+    
+    
+    
     
     // общая функция получения
     
@@ -355,7 +388,7 @@ final class APICaller {
 
                      DispatchQueue.main.async {
                          do {
-                             print(data)
+                      //       print(data)
                              let decoded = try JSONDecoder().decode(PlaylistAPI.self, from: data)
                              completion(.success(decoded))
                          } catch {
@@ -472,7 +505,7 @@ final class APICaller {
                         completion(.failure(APIError.faileedToGetData))
                         return
                     }
-                    print(httpResponse.statusCode)
+              //      print(httpResponse.statusCode)
 
                     if httpResponse.statusCode != 200 {
                         completion(.failure(APIError.somethingGoWrong))
@@ -529,7 +562,7 @@ final class APICaller {
                     return
                 }
                 
-                print(httpResponse.statusCode)
+          //      print(httpResponse.statusCode)
                 if httpResponse.statusCode != 200 {
                     completion(.failure(APIError.somethingGoWrong))
                     return

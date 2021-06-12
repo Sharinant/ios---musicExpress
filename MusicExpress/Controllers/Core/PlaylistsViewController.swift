@@ -23,7 +23,7 @@ class PlaylistsViewController: UIViewController {
         label.text = "У вас пока что нет плейлистов.\nМожет, пора это исправить?"
         label.numberOfLines = 2
         label.font = .systemFont(ofSize: 15, weight: .bold)
-        label.textColor = .systemBlue
+        label.textColor = .white
 
         return label
     }()
@@ -33,41 +33,33 @@ class PlaylistsViewController: UIViewController {
         collectionViewLayout: UICollectionViewCompositionalLayout(
             sectionProvider: {
                 _,_ -> NSCollectionLayoutSection?  in
-                let supplementaryViews = [
-                    NSCollectionLayoutBoundarySupplementaryItem(
-                        layoutSize: NSCollectionLayoutSize(
-                            widthDimension: .fractionalWidth(1),
-                            heightDimension: .absolute(50)
-                        ),
-                        elementKind: UICollectionView.elementKindSectionHeader,
-                        alignment: .top
-                    )
-                ]
-
                 let item = NSCollectionLayoutItem(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1.0),
-                        heightDimension: .fractionalHeight(1.0)
+                        heightDimension: .absolute(80)
                     )
                 )
-                
-                item.contentInsets = NSDirectionalEdgeInsets(top: 3, leading: 3, bottom: 0, trailing: 3)
+                                                    
+                item.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 2)
 
-                let secondGroup = NSCollectionLayoutGroup.horizontal(
+                let firstGroup = NSCollectionLayoutGroup.vertical(
                     layoutSize: NSCollectionLayoutSize(
                         widthDimension: .fractionalWidth(1),
-                        heightDimension: .fractionalWidth(1)
+                        heightDimension: .fractionalWidth(0.2)
                     ),
                     subitem: item,
                     count: 1
                 )
-
-                let section = NSCollectionLayoutSection(group: secondGroup)
-
-                // свойство для горизонтальных групп
-                section.orthogonalScrollingBehavior = .continuous
-                section.boundarySupplementaryItems = supplementaryViews
+                                                    
+                let section = NSCollectionLayoutSection(group: firstGroup)
+                let supplementaryViews = [NSCollectionLayoutBoundarySupplementaryItem(
+                                            layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1),
+                                                                               heightDimension: .fractionalWidth(0.3)),
+                                            elementKind: UICollectionView.elementKindSectionHeader,
+                                            alignment: .top)]
                 
+                section.boundarySupplementaryItems = supplementaryViews
+
                 return section
             }
         )
@@ -82,8 +74,11 @@ class PlaylistsViewController: UIViewController {
         super.viewDidLayoutSubviews()
         collectionViewSongs.frame = view.bounds
     }
+   
     
-    private var viewModels = [RecomendedAlbumCellViewModel]()
+    
+    
+    private var viewModels = [PlaylistCellViewModel]()
     private var albums = [Song]()
 
     override func viewDidLoad() {
@@ -117,8 +112,8 @@ class PlaylistsViewController: UIViewController {
         view.addSubview(collectionViewSongs)
         
         collectionViewSongs.register(
-            PopularAlbumCollectionViewCell.self,
-            forCellWithReuseIdentifier: PopularAlbumCollectionViewCell.identifier
+            PlaylistCollectionViewCell.self,
+            forCellWithReuseIdentifier: PlaylistCollectionViewCell.identifier
         )
 
         collectionViewSongs.backgroundColor = .systemBackground
@@ -136,11 +131,11 @@ class PlaylistsViewController: UIViewController {
                     }
                     self?.albums = model
                     self?.viewModels = model.compactMap({
-                        print($0)
-                        return RecomendedAlbumCellViewModel(
+                       
+                        return PlaylistCellViewModel(
                             title: $0.title ?? "",
-                            artist: $0.artist ?? "",
-                            poster: "/1c3581a20a2ee22664efa57d66250202.png"
+                            poster: "playlist.png"
+                            
                         )
                     })
                     self?.collectionViewSongs.reloadData()
@@ -172,7 +167,7 @@ class PlaylistsViewController: UIViewController {
         )
         
         alert.addTextField { textField in
-            textField.placeholder = "Базука"
+            textField.placeholder = "Имя плейлиста"
         }
         
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
@@ -187,6 +182,31 @@ class PlaylistsViewController: UIViewController {
                 DispatchQueue.main.async {
                     switch result {
                     case .success(_):
+                        APICaller.shared.getPlaylists {
+                            [weak self] result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let model):
+                                    if model.count == 0 {
+                                        self?.drawEmpty()
+                                        return
+                                    }
+                                    self?.albums = model
+                                    self?.viewModels = model.compactMap({
+                                       
+                                        return PlaylistCellViewModel(
+                                            title: $0.title ?? "",
+                                            poster: "playlist.png"
+                                            
+                                        )
+                                    })
+                                    self?.collectionViewSongs.reloadData()
+                                case.failure(let error):
+                                    print("failed to get album details", error)
+                                    break
+                                }
+                            }
+                        }
                         break
                     case .failure(let error):
                         print(error)
@@ -197,6 +217,7 @@ class PlaylistsViewController: UIViewController {
         }))
         
         present(alert, animated: true)
+        
     }
 }
 
@@ -211,9 +232,9 @@ extension PlaylistsViewController: UICollectionViewDelegate, UICollectionViewDat
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: PopularAlbumCollectionViewCell.identifier,
+            withReuseIdentifier: PlaylistCollectionViewCell.identifier,
             for: indexPath
-        ) as? PopularAlbumCollectionViewCell else {
+        ) as? PlaylistCollectionViewCell else {
             return UICollectionViewCell ()
         }
         

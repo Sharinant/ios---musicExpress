@@ -12,7 +12,7 @@ import UIKit
 
 class GroupOfTheDayCVcell: UICollectionViewCell {
     
-    var test : PlayerPresenter?
+   
     
     static let identifier = "GroupOfTheDayCVcell"
     
@@ -66,8 +66,8 @@ class GroupOfTheDayCVcell: UICollectionViewCell {
         super.init(frame: frame)
         contentView.backgroundColor = .secondarySystemBackground
         contentView.addSubview(groupImage)
-        contentView.addSubview(groupOfDayLabel)
-        contentView.addSubview(nameOfGroupOfDay)
+      //  contentView.addSubview(groupOfDayLabel)
+       // contentView.addSubview(nameOfGroupOfDay)
      //   contentView.addSubview(playRandomTrackButton)
        // contentView.addSubview(ArtistNameLabel)
     }
@@ -104,7 +104,7 @@ class GroupOfTheDayCVcell: UICollectionViewCell {
     
 
     @objc private func playRandomTrack () {
-        print("Pushed random track button")
+    //    print("Pushed random track button")
     }
     func configure(with viewmodel: groupOfDayCellViewModel) {
         

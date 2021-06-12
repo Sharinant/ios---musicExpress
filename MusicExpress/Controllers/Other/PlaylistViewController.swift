@@ -66,6 +66,78 @@ class PlaylistViewController: UIViewController {
         fatalError()
     }
     
+    
+    @objc private func reloadPlaylist () {
+        
+        APICaller.shared.getPlaylist(
+            number: album?.id ?? 0
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result{
+                case .success(let model):
+                    let playlist = model.playlist
+    
+                    self?.tracks = playlist.tracks ?? []
+
+                    self?.viewModels = self?.tracks.compactMap({
+                        return TopSongsCellViewModel(
+                            id: $0.id ?? 0,
+                            title: $0.title ?? "",
+                            duration: $0.duration ?? 0,
+                            artist: $0.artist ?? "",
+                            album_poster: $0.album_poster ?? "",
+                            artist_id: $0.artist_id ?? 0,
+                            isLiked: $0.is_liked ?? false,
+                            isPlus:$0.is_favorite ?? false,
+                            audio: $0.audio ?? ""
+                        )
+                    }) ?? [TopSongsCellViewModel]()
+
+                    self?.collectionViewSongs.reloadData()
+                case.failure(let error):
+                    print("failed to get album details", error)
+                    break
+                }
+            }
+        }
+    }
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadPlaylist), name: NSNotification.Name("playlist reload"), object: nil)
+        super.viewWillAppear(false)
+        APICaller.shared.getPlaylist(
+            number: album?.id ?? 0
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result{
+                case .success(let model):
+                    let playlist = model.playlist
+    
+                    self?.tracks = playlist.tracks ?? []
+
+                    self?.viewModels = self?.tracks.compactMap({
+                        return TopSongsCellViewModel(
+                            id: $0.id ?? 0,
+                            title: $0.title ?? "",
+                            duration: $0.duration ?? 0,
+                            artist: $0.artist ?? "",
+                            album_poster: $0.album_poster ?? "",
+                            artist_id: $0.artist_id ?? 0,
+                            isLiked: $0.is_liked ?? false,
+                            isPlus:$0.is_favorite ?? false,
+                            audio: $0.audio ?? ""
+                        )
+                    }) ?? [TopSongsCellViewModel]()
+
+                    self?.collectionViewSongs.reloadData()
+                case.failure(let error):
+                    print("failed to get album details", error)
+                    break
+                }
+            }
+        }    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         title = album?.title
@@ -187,14 +259,14 @@ extension PlaylistViewController: UICollectionViewDelegate, UICollectionViewData
         collectionView.deselectItem(at: indexPath, animated: true)
         // play song
         let index = indexPath.row
-        let track = tracks[index]
+        
         PlayBackPresenter.shared.playSongByTrack(from: self, tracks: tracks, currentItemIndex: index)
     }
 }
 
 extension PlaylistViewController: PlaylistHeaderCollectionViewDelegate {
     func albumHeaderCollectionReusableViewDidTapPlayAll(_ header: PlaylistHeaderCollectionView) {
-        print("Playing all")
+     //   print("Playing all")
         PlayBackPresenter.shared.playSongByTrack(
             from: self,
             tracks: tracks,

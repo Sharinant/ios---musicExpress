@@ -40,10 +40,8 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                 self?.signOutTapped()
             }
         })]))
-        sections.append(Section(title: "Team", options: [Option(title: "Project MusicExpress by @CodeExpress ", handler: { [weak self] in
-            DispatchQueue.main.async {
-                //self?.signOutTapped()
-            }
+        sections.append(Section(title: "Team", options: [Option(title: "Project MusicExpress by @CodeExpress ",handler: {
+            
         })]))
     }
     

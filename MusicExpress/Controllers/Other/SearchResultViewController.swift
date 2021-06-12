@@ -38,6 +38,7 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
         label.text = "Ничего не найдено("
         label.font = .systemFont(ofSize: 15, weight: .bold)
         label.textColor = .white
+        label.textAlignment = .center
         
         return label
     }()
@@ -52,10 +53,11 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
 
     override func viewDidLoad() {
         super.viewDidLoad()
-       // view.backgroundColor = .lightGray
+      
         view.addSubview(showEmptyLabel)
         view.addSubview(showEmptyImage)
         view.addSubview(tableView)
+        
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none
@@ -67,10 +69,11 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
         super.viewDidLayoutSubviews()
         tableView.frame = view.bounds
         showEmptyImage.frame = CGRect(x: 50, y: 200, width: 250, height: 200)
-        showEmptyLabel.frame = CGRect(x: 120, y: showEmptyImage.bottom + 15, width: 300, height: 15)
+        showEmptyLabel.frame = CGRect(x: 0, y: showEmptyImage.bottom + 15, width: view.width, height: 15)
     }
     
     func update(with results: SearchReslutResponse) {
+        
         showEmptyImage.isHidden = true
         showEmptyLabel.isHidden = true
         
@@ -90,9 +93,11 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
     }
     
     func noResults()  {
+        
         tableView.isHidden = true
         showEmptyImage.isHidden = false
         showEmptyLabel.isHidden = false
+        
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -152,12 +157,14 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        
         HapticsManager.shared.vibrateForSelection()
 
         let section = self.sections[indexPath.section]
         let result = section.results[indexPath.row]
         
         switch section.title {
+        
         case "Artists":
             let artist = result
             let vc = ArtistViewController(artist: artist)
@@ -165,22 +172,17 @@ class SearchResultViewController: UIViewController, UITableViewDelegate, UITable
             vc.navigationItem.largeTitleDisplayMode = .never
             delegate?.showResult(vc)
             break
+            
         case "Albums":
             let album = result
             let vc = AlbumViewController(album: album)
             vc.title = album.title
             delegate?.showResult(vc)
             vc.navigationItem.largeTitleDisplayMode = .never
-
-            
+            break
         case "Tracks":
             
-      //      let track = result
             PlayBackPresenter.shared.playSongBySong(from: self, songs: section.results, currentItemIndex: indexPath.row)
-          //  PlayBackPresenter.shared.startPlaybackWithSong(from: self, track: track)
-            
-            
-            
             
             break
         default:
