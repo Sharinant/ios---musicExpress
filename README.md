@@ -1,7 +1,7 @@
 # MusicExpress IOS client
 * Сервис для прослушивания музыки
 * [Cайт](https://musicexpress.sarafa2n.ru/)
-* MVVM
+* Проект Технопарк Mail.ru
 * SDWebImage
 * Screenshots
 * <img src = "Screenshots/signIn.PNG" width = 250> <img src = "Screenshots/home1.PNG" width = 250> <img src = "Screenshots/home2.PNG" width = 250> 
